@@ -1,13 +1,12 @@
 # OTP Login for FilamentPHP
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/afsakar/filament-otp-login.svg?style=flat-square)](https://packagist.org/packages/afsakar/filament-otp-login)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/afsakar/filament-otp-login/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/afsakar/filament-otp-login/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/afsakar/filament-otp-login/fix-php-code-styling.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/afsakar/filament-otp-login/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/afsakar/filament-otp-login.svg?style=flat-square)](https://packagist.org/packages/afsakar/filament-otp-login)
 
+![Screenshot](https://banners.beyondco.de/Filament%20OTP%20Login.png?theme=light&packageManager=composer+require&packageName=afsakar%2Ffilament-otp-login&pattern=architect&style=style_1&description=Simple+OTP+Login+for+FilamentPHP&md=1&showWatermark=0&fontSize=100px&images=login)
 
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+This package is an OTP Login for FilamentPHP. It is a simple package that allows you to login to your FilamentPHP application using OTP.
 
 ## Installation
 
@@ -24,10 +23,11 @@ php artisan vendor:publish --tag="filament-otp-login-migrations"
 php artisan migrate
 ```
 
-You can publish the config file with:
+You can publish the config and translations files with:
 
 ```bash
 php artisan vendor:publish --tag="filament-otp-login-config"
+php artisan vendor:publish --tag="filament-otp-login-translations"
 ```
 
 Optionally, you can publish the views using
@@ -40,14 +40,32 @@ This is the contents of the published config file:
 
 ```php
 return [
+    'table_name' => 'otp_codes', // Table name to store OTP codes
+
+    'user_model' => env('OTP_LOGIN_USER_MODEL',  'App\\Models\\User',), // User model to store OTP codes
+
+    'otp_code' => [
+        'length' => env('OTP_LOGIN_CODE_LENGTH', 6), // Length of the OTP code
+        'expires' => env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120), // Expiration time of the OTP code in seconds
+    ],
 ];
+
 ```
 
 ## Usage
 
+Just register the `Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin` plugin in the your panel provider file.
+
 ```php
-$filamentOtpLogin = new Afsakar\FilamentOtpLogin();
-echo $filamentOtpLogin->echoPhrase('Hello, Afsakar!');
+use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
+
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->plugins([
+                FilamentOtpLoginPlugin::make(),
+            ]);
+    }
 ```
 
 ## Testing

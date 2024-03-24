@@ -2,6 +2,7 @@
 
 namespace Afsakar\FilamentOtpLogin;
 
+use Afsakar\FilamentOtpLogin\Filament\Pages\Login;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
@@ -14,7 +15,7 @@ class FilamentOtpLoginPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        //
+        $panel->login(Login::class);
     }
 
     public function boot(Panel $panel): void
