@@ -220,7 +220,7 @@ class Login extends BaseLogin
             ->label(__('filament-otp-login::translations.otp_code'))
             ->numeric()
             ->suffixIcon('heroicon-o-finger-print')
-            ->hintAction(fn() => $this->goBackAction())
+            ->hintAction(fn () => $this->goBackAction())
             ->maxLength(config('filament-otp-login.otp_code.length'))
             ->required()
             ->extraInputAttributes(['tabindex' => 3]);
@@ -257,7 +257,7 @@ class Login extends BaseLogin
     {
         return ActionComponent::make('go-back')
             ->label(__('filament-otp-login::translations.view.go_back'))
-            ->action(fn() => $this->step = 1);
+            ->action(fn () => $this->step = 1);
     }
 
     protected function getAuthenticateFormAction(): Action

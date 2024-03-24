@@ -3,9 +3,6 @@
 namespace Afsakar\FilamentOtpLogin;
 
 use Afsakar\FilamentOtpLogin\Commands\PruneOtpCodes;
-use Afsakar\FilamentOtpLogin\Testing\TestsFilamentOtpLogin;
-use Illuminate\Filesystem\Filesystem;
-use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
