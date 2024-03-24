@@ -107,7 +107,7 @@ class Login extends BaseLogin
 
     public function verifyCode(): void
     {
-        $code = OtpCode::where('code', $this->data['otp'])->first();
+        $code = OtpCode::whereCode($this->data['otp'])->first();
 
         if (! $code) {
             throw ValidationException::withMessages([
@@ -130,7 +130,7 @@ class Login extends BaseLogin
             $length = config('filament-otp-login.otp_code.length');
 
             $code = str_pad(rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
-        } while (OtpCode::where('code', $code)->exists());
+        } while (OtpCode::whereCode($code)->exists());
 
         $this->otpCode = $code;
 

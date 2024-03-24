@@ -10,7 +10,7 @@ return new class extends Migration
     {
         $table_name = config('filament-otp-login.table_name');
 
-        Schema::create($table_name, function (Blueprint $table) use ($default_column) {
+        Schema::create($table_name, function (Blueprint $table) {
             $table->id();
             $table->string('code');
             $table->string('email');

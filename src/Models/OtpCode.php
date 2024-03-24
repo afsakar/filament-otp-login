@@ -2,7 +2,9 @@
 
 namespace Afsakar\FilamentOtpLogin\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\MassPrunable;
 
 /**
  * @property string $code
@@ -11,24 +13,26 @@ use Illuminate\Database\Eloquent\Model;
  */
 class OtpCode extends Model
 {
+    use MassPrunable;
     protected $guarded = [];
 
     protected $casts = [
         'expires_at' => 'datetime',
     ];
 
-    public function isValid()
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setTable(config('filament-otp-login.table_name'));
+    }
+
+    public function prunable(): Builder
+    {
+        return static::where('expires_at', '<=', now()->subDay()->startOfDay());
+    }
+
+    public function isValid(): bool
     {
         return $this->expires_at->isFuture();
-    }
-
-    public function scopeValid($query)
-    {
-        return $query->where('expires_at', '>', now());
-    }
-
-    public function scopeCode($query, $code)
-    {
-        return $query->where('code', $code);
     }
 }
