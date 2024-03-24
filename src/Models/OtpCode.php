@@ -3,8 +3,8 @@
 namespace Afsakar\FilamentOtpLogin\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\MassPrunable;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property string $code
@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\MassPrunable;
 class OtpCode extends Model
 {
     use MassPrunable;
+
     protected $guarded = [];
 
     protected $casts = [
