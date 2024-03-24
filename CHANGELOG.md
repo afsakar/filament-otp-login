@@ -2,6 +2,10 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.1 - 2024-03-24
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.0.0...v1.1
+
 ## v1.0.0 - 2024-03-24
 
 ### What's Changed
