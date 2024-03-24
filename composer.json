@@ -1,29 +1,27 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "afsakar/filament-otp-login",
+    "description": "OTP Login for FilamentPHP",
     "keywords": [
-        ":vendor_name",
+        "afsakar",
         "laravel",
-        ":package_slug"
+        "filament-otp-login"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/afsakar/filament-otp-login",
     "support": {
-        "issues": "https://github.com/:vendor_slug/:package_slug/issues",
-        "source": "https://github.com/:vendor_slug/:package_slug"
+        "issues": "https://github.com/afsakar/filament-otp-login/issues",
+        "source": "https://github.com/afsakar/filament-otp-login"
     },
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Azad Furkan ŞAKAR",
+            "email": "afsakarr@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.1",
         "filament/filament": "^3.0",
-        "filament/forms": "^3.0",
-        "filament/tables": "^3.0",
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
@@ -41,13 +39,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Afsakar\\FilamentOtpLogin\\": "src/",
+            "Afsakar\\FilamentOtpLogin\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "Afsakar\\FilamentOtpLogin\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -67,10 +65,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Afsakar\\FilamentOtpLogin\\FilamentOtpLoginServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "FilamentOtpLogin": "Afsakar\\FilamentOtpLogin\\Facades\\FilamentOtpLogin"
             }
         }
     },

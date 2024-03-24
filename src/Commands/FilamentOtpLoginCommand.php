@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Afsakar\FilamentOtpLogin\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class FilamentOtpLoginCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'filament-otp-login';
 
     public $description = 'My command';
 
