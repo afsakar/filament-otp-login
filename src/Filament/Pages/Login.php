@@ -2,6 +2,7 @@
 
 namespace Afsakar\FilamentOtpLogin\Filament\Pages;
 
+use Afsakar\FilamentOtpLogin\Filament\Forms\OtpInput;
 use Afsakar\FilamentOtpLogin\Models\OtpCode;
 use Afsakar\FilamentOtpLogin\Notifications\SendOtpCode;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
@@ -11,7 +12,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Actions\Action as ActionComponent;
 use Filament\Forms\Components\Component;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
@@ -19,6 +19,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Auth\Login as BaseLogin;
 use Filament\Pages\Concerns\InteractsWithFormActions;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 
@@ -216,14 +217,15 @@ class Login extends BaseLogin
 
     protected function getOtpCodeFormComponent(): Component
     {
-        return TextInput::make('otp')
+        return OtpInput::make('otp')
             ->label(__('filament-otp-login::translations.otp_code'))
-            ->numeric()
-            ->suffixIcon('heroicon-o-finger-print')
-            ->hintAction(fn () => $this->goBackAction())
-            ->maxLength(config('filament-otp-login.otp_code.length'))
-            ->required()
-            ->extraInputAttributes(['tabindex' => 3]);
+            ->hint(new HtmlString('<button type="button" wire:click="goBack()" class="focus:outline-none font-bold focus:underline hover:text-primary-400 text-primary-600 text-sm">' . __('filament-otp-login::translations.view.go_back') . '</button>'))
+            ->required();
+    }
+
+    public function goBack(): void
+    {
+        $this->step = 1;
     }
 
     /**
@@ -257,7 +259,7 @@ class Login extends BaseLogin
     {
         return ActionComponent::make('go-back')
             ->label(__('filament-otp-login::translations.view.go_back'))
-            ->action(fn () => $this->step = 1);
+            ->action(fn () => $this->goBack());
     }
 
     protected function getAuthenticateFormAction(): Action

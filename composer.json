@@ -53,7 +53,7 @@
         "phpstan": "vendor/bin/phpstan analyse --error-format=github --memory-limit=1G",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint -v",
+        "lint": "vendor/bin/pint -v",
         "checks": [
             "@lint",
             "@phpstan",

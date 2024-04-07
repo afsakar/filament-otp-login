@@ -26,6 +26,6 @@ return [
 
     'validation' => [
         'invalid_code' => 'Girdiğiniz şifre geçersiz.',
-        'expired_code' => 'Girdiğiniz şifre süresi dolmuş.',
+        'expired_code' => 'Girdiğiniz şifrenin süresi dolmuş. Lütfen yeni bir şifre isteyin.',
     ],
 ];
