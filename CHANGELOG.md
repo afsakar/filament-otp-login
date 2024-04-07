@@ -2,6 +2,12 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.2.0 - 2024-04-07
+
+- Added OtpInput Component
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.1...v1.2.0
+
 ## v1.1 - 2024-03-24
 
 **Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.0.0...v1.1
