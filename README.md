@@ -90,6 +90,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 - [Azad Furkan ŞAKAR](https://github.com/afsakar)
 - [All Contributors](../../contributors)
+- [OTP Input inspiration](https://github.com/rajeshdewle/otp-pin-using-alpine-js-and-tailwindcss)
 
 ## License
 
