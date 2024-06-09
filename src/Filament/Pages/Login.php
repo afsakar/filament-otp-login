@@ -35,7 +35,7 @@ class Login extends BaseLogin
 
     public int $step = 1;
 
-    public int|string $otpCode = '';
+    public int | string $otpCode = '';
 
     public string $email = '';
 
@@ -95,7 +95,7 @@ class Login extends BaseLogin
 
         if (
             ($user instanceof FilamentUser) &&
-            (!$user->canAccessPanel(Filament::getCurrentPanel()))
+            (! $user->canAccessPanel(Filament::getCurrentPanel()))
         ) {
             Filament::auth()->logout();
 
@@ -109,11 +109,11 @@ class Login extends BaseLogin
     {
         $code = OtpCode::whereCode($this->data['otp'])->first();
 
-        if (!$code) {
+        if (! $code) {
             throw ValidationException::withMessages([
                 'data.otp' => __('filament-otp-login::translations.validation.invalid_code'),
             ]);
-        } elseif (!$code->isValid()) {
+        } elseif (! $code->isValid()) {
             throw ValidationException::withMessages([
                 'data.otp' => __('filament-otp-login::translations.validation.expired_code'),
             ]);
@@ -259,7 +259,7 @@ class Login extends BaseLogin
     {
         return ActionComponent::make('go-back')
             ->label(__('filament-otp-login::translations.view.go_back'))
-            ->action(fn() => $this->goBack());
+            ->action(fn () => $this->goBack());
     }
 
     protected function getAuthenticateFormAction(): Action
@@ -270,7 +270,7 @@ class Login extends BaseLogin
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function getCredentialsFromFormData(array $data): array
@@ -283,7 +283,7 @@ class Login extends BaseLogin
 
     protected function checkCredentials($data): void
     {
-        if (!Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
             $this->throwFailureValidationException();
         }
     }
