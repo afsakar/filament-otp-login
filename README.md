@@ -42,8 +42,6 @@ This is the contents of the published config file:
 return [
     'table_name' => 'otp_codes', // Table name to store OTP codes
 
-    'user_model' => env('OTP_LOGIN_USER_MODEL',  'App\\Models\\User',), // User model to store OTP codes
-
     'otp_code' => [
         'length' => env('OTP_LOGIN_CODE_LENGTH', 6), // Length of the OTP code
         'expires' => env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120), // Expiration time of the OTP code in seconds
