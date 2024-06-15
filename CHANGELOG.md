@@ -2,6 +2,12 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.3.1 - 2024-06-15
+
+Fixed automatic login when sending OTP notification.
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.0...v1.3.1
+
 ## v1.3.0 - 2024-06-09
 
 ### What's Changed
