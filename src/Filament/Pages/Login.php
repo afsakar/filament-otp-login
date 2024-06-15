@@ -89,7 +89,9 @@ class Login extends BaseLogin
     {
         $data = $this->form->getState();
 
-        $this->checkCredentials($data);
+        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+            $this->throwFailureValidationException();
+        }
 
         $user = Filament::auth()->user();
 
@@ -283,7 +285,7 @@ class Login extends BaseLogin
 
     protected function checkCredentials($data): void
     {
-        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+        if(! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
             $this->throwFailureValidationException();
         }
     }
