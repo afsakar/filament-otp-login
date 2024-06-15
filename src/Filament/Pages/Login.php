@@ -285,7 +285,7 @@ class Login extends BaseLogin
 
     protected function checkCredentials($data): void
     {
-        if(! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
+        if (! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
             $this->throwFailureValidationException();
         }
     }
