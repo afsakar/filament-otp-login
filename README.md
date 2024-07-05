@@ -66,6 +66,8 @@ use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
     }
 ```
 
+_*Note:* For medium and large scale applications, you only need to run "php artisan model:prune" command as cron to prevent the otp_code table from bloating and performance issues._
+
 ## Testing
 
 ```bash
