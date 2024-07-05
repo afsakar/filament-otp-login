@@ -2,6 +2,12 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.3.2 - 2024-07-05
+
+- Fixed a bug where the paste action was not working on firefox. #6
+- Fixed Otp Code's "public" status to "private" which caused a security vulnerability. (*Thank to @alex-r-redfern* )
+- Added notes about prunable to README.
+
 ## v1.3.1 - 2024-06-15
 
 Fixed automatic login when sending OTP notification.
