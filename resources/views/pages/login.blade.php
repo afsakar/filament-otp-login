@@ -60,7 +60,7 @@
                             });
                         }
                     }">
-                    <div x-show="timerRunning" class="timer font-semibold resend-link text-end text-primary-600 text-sm" x-ref="timerWrapper">
+                    <div x-show="timerRunning" class="timer font-semibold resend-link text-end text-primary-600 text-sm" x-ref="timerWrapper" dir="{{config('app.locale') == 'fa' || config('app.locale') == 'ar' ? 'ltr' : ''}}">
                         <span x-text="timeLeft"></span> {{ __('filament-otp-login::translations.view.time_left') }}
                     </div>
                     <a x-on:click="resendCode" x-show="!timerRunning" x-ref="resendLink" class="hidden cursor-pointer font-semibold resend-link text-end text-primary-600 text-sm">
