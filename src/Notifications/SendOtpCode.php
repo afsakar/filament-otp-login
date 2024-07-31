@@ -5,6 +5,7 @@ namespace Afsakar\FilamentOtpLogin\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Afsakar\FilamentOtpLogin\Channels\SmsChannel;
 
 class SendOtpCode extends Notification
 {
@@ -15,7 +16,7 @@ class SendOtpCode extends Notification
      *
      * @return void
      */
-    public function __construct(public string $code)
+    public function __construct(public string $type, public string $phone, public string $code)
     {
         //
     }
@@ -28,7 +29,11 @@ class SendOtpCode extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        if ($this->type == 'email') {
+            return ['mail'];
+        } else {
+            return [SmsChannel::class];
+        }
     }
 
     /**
@@ -46,6 +51,20 @@ class SendOtpCode extends Notification
             ->line(__('filament-otp-login::translations.mail.line2', ['seconds' => config('filament-otp-login.otp_code.expires')]))
             ->line(__('filament-otp-login::translations.mail.line3'))
             ->salutation(__('filament-otp-login::translations.mail.salutation', ['app_name' => config('app.name')]));
+    }
+
+    /**
+     * Get the sms representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return \Afsakar\FilamentOtpLogin\Channels\SmsChannel
+     */
+    public function toSms($notifiable)
+    {
+        return [
+            'phone' => $this->phone,
+            'code' => $this->code
+        ];
     }
 
     /**

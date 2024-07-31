@@ -21,11 +21,17 @@ return [
 
     'notifications' => [
         'title' => 'Tek Kullanımlık Şifre Gönderildi',
-        'body' => 'Doğrulama kodu e-posta adresinize gönderildi. :seconds saniye içinde geçerli olacaktır.',
+        'body' => 'Doğrulama kodu :type gönderildi. :seconds saniye içinde geçerli olacaktır.',
     ],
 
     'validation' => [
         'invalid_code' => 'Girdiğiniz şifre geçersiz.',
         'expired_code' => 'Girdiğiniz şifrenin süresi dolmuş. Lütfen yeni bir şifre isteyin.',
     ],
+
+    'email' => 'E-posta',
+    'phone' => 'Telefon',
+
+    'email_address' => 'E-posta Adresi',
+    'phone_number' => 'Telefon Numarası',
 ];

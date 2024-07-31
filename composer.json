@@ -22,7 +22,8 @@
     "require": {
         "php": "^8.1",
         "filament/filament": "^3.0",
-        "spatie/laravel-package-tools": "^1.15.0"
+        "spatie/laravel-package-tools": "^1.15.0",
+        "ysfkaya/filament-phone-input": "^2.3"
     },
     "require-dev": {
         "larastan/larastan": "^2.9",

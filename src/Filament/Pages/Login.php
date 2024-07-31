@@ -22,38 +22,34 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\ToggleButtons;
 
 class Login extends BaseLogin
 {
-    use InteractsWithFormActions;
-    use Notifiable;
-    use WithRateLimiting;
+    use InteractsWithFormActions, Notifiable, WithRateLimiting;
 
     protected static string $view = 'filament-otp-login::pages.login';
 
     public ?array $data = [];
-
     public int $step = 1;
-
-    private int | string $otpCode = '';
-
+    private int|string $otpCode = '';
     public string $email = '';
-
+    public string $phone = '';
     public int $countDown = 120;
 
     public function mount(): void
     {
-
         if (Filament::auth()->check()) {
             redirect()->intended(Filament::getUrl());
         }
 
         $this->form->fill();
-
         $this->countDown = config('filament-otp-login.otp_code.expires');
     }
 
-    protected function rateLimiter()
+    protected function rateLimiter(): void
     {
         try {
             $this->rateLimit(5);
@@ -63,44 +59,37 @@ class Login extends BaseLogin
                     'seconds' => $exception->secondsUntilAvailable,
                     'minutes' => ceil($exception->secondsUntilAvailable / 60),
                 ]))
-                ->body(array_key_exists('body', __('filament-panels::pages/auth/login.notifications.throttled') ?: []) ? __('filament-panels::pages/auth/login.notifications.throttled.body', [
+                ->body(__('filament-panels::pages/auth/login.notifications.throttled.body', [
                     'seconds' => $exception->secondsUntilAvailable,
                     'minutes' => ceil($exception->secondsUntilAvailable / 60),
-                ]) : null)
+                ]))
                 ->danger()
                 ->send();
 
-            return null;
+            return;
         }
     }
 
     public function authenticate(): ?LoginResponse
     {
         $this->rateLimiter();
-
         $this->verifyCode();
-
         $this->doLogin();
-
         return app(LoginResponse::class);
     }
 
     protected function doLogin(): void
     {
         $data = $this->form->getState();
+        $credentials = $this->getCredentialsFromFormData($data);
 
-        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+        if (!Filament::auth()->attempt($credentials, $data['remember'] ?? false)) {
             $this->throwFailureValidationException();
         }
 
         $user = Filament::auth()->user();
-
-        if (
-            ($user instanceof FilamentUser) &&
-            (! $user->canAccessPanel(Filament::getCurrentPanel()))
-        ) {
+        if ($user instanceof FilamentUser && !$user->canAccessPanel(Filament::getCurrentPanel())) {
             Filament::auth()->logout();
-
             $this->throwFailureValidationException();
         }
 
@@ -109,37 +98,37 @@ class Login extends BaseLogin
 
     public function verifyCode(): void
     {
-        $code = OtpCode::whereCode($this->data['otp'])->whereEmail($this->data['email'])->first();
+        $code = OtpCode::whereCode($this->data['otp'])
+            ->where($this->data['login_option'] === 'email' ? 'email' : 'phone', $this->data[$this->data['login_option']])
+            ->first();
 
-        if (! $code) {
+        if (!$code) {
             throw ValidationException::withMessages([
                 'data.otp' => __('filament-otp-login::translations.validation.invalid_code'),
             ]);
-        } elseif (! $code->isValid()) {
+        } elseif (!$code->isValid()) {
             throw ValidationException::withMessages([
                 'data.otp' => __('filament-otp-login::translations.validation.expired_code'),
             ]);
         } else {
             $this->dispatch('codeVerified');
-
             $code->delete();
         }
     }
 
     public function generateCode(): void
     {
-        do {
-            $length = config('filament-otp-login.otp_code.length');
+        $data = $this->form->getState();
+        $loginOption = $data['login_option'];
+        $length = config('filament-otp-login.otp_code.length');
 
+        do {
             $code = str_pad(rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
-        } while (OtpCode::whereCode($code)->whereEmail($this->data['email'])->exists());
+        } while (OtpCode::whereCode($code)->where($loginOption, $data[$loginOption])->exists());
 
         $this->otpCode = $code;
-
-        $data = $this->form->getState();
-
         OtpCode::updateOrCreate([
-            'email' => $data['email'],
+            $loginOption => $data[$loginOption],
         ], [
             'code' => $this->otpCode,
             'expires_at' => now()->addSeconds(config('filament-otp-login.otp_code.expires')),
@@ -150,17 +139,11 @@ class Login extends BaseLogin
 
     public function sendOtp(): void
     {
-
         $this->rateLimiter();
-
         $data = $this->form->getState();
-
         $this->checkCredentials($data);
-
         $this->generateCode();
-
         $this->sendOtpToUser($this->otpCode);
-
         $this->step = 2;
     }
 
@@ -168,21 +151,24 @@ class Login extends BaseLogin
     public function resendCode(): void
     {
         $this->rateLimiter();
-
         $this->generateCode();
-
         $this->sendOtpToUser($this->otpCode);
     }
 
     protected function sendOtpToUser(string $otpCode): void
     {
-        $this->email = $this->data['email'];
+        $type = $this->data['login_option'] === 'email'
+            ? __('filament-otp-login::translations.email_address')
+            : __('filament-otp-login::translations.phone_number');
 
-        $this->notify(new SendOtpCode($otpCode));
+        $this->notify(new SendOtpCode($this->data['login_option'], $this->phone, $otpCode));
 
         Notification::make()
             ->title(__('filament-otp-login::translations.notifications.title'))
-            ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => config('filament-otp-login.otp_code.expires')]))
+            ->body(__('filament-otp-login::translations.notifications.body', [
+                'seconds' => config('filament-otp-login.otp_code.expires'),
+                'type' => $type
+            ]))
             ->success()
             ->send();
     }
@@ -192,29 +178,56 @@ class Login extends BaseLogin
         return $form;
     }
 
-    /**
-     * @return array<int | string, string | Form>
-     */
     protected function getForms(): array
     {
+        $loginOption = config('filament-otp-login.login_option');
+        $schema = [];
+
+        if ($loginOption === 'email') {
+            $schema[] = $this->getEmailFormComponent();
+        } elseif ($loginOption === 'phone') {
+            $schema[] = $this->getPhoneFormComponent();
+        } else {
+            $schema[] = $this->getEmailAndPhoneFormComponent();
+        }
+
+        $schema[] = $this->getPasswordFormComponent();
+        $schema[] = $this->getRememberFormComponent();
+
         return [
-            'form' => $this->form(
-                $this->makeForm()
-                    ->schema([
-                        $this->getEmailFormComponent(),
-                        $this->getPasswordFormComponent(),
-                        $this->getRememberFormComponent(),
-                    ])
-                    ->statePath('data'),
-            ),
-            'otpForm' => $this->form(
-                $this->makeForm()
-                    ->schema([
-                        $this->getOtpCodeFormComponent(),
-                    ])
-                    ->statePath('data'),
-            ),
+            'form' => $this->form($this->makeForm()->schema($schema)->statePath('data')),
+            'otpForm' => $this->form($this->makeForm()->schema([$this->getOtpCodeFormComponent()])->statePath('data')),
         ];
+    }
+
+    protected function getPhoneFormComponent(): Component
+    {
+        return PhoneInput::make('phone')
+            ->label('panel.phone_number')
+            ->translateLabel()
+            ->required()
+            ->autofocus()
+            ->extraInputAttributes(['tabindex' => 1]);
+    }
+
+    protected function getEmailAndPhoneFormComponent(): Component
+    {
+        return Group::make()
+            ->schema([
+                ToggleButtons::make('login_option')
+                    ->label('')
+                    ->options([
+                        'email' => __('filament-otp-login::translations.email_address'),
+                        'phone' => __('filament-otp-login::translations.phone_number'),
+                    ])
+                    ->default('email')
+                    ->grouped()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state, $set) => $set($state === 'phone' ? 'email' : 'phone', null))
+                    ->extraAttributes(['style' => 'margin-right: auto; margin-left: auto;']),
+                $this->getEmailFormComponent()->hidden(fn ($get) => $get('login_option') !== 'email'),
+                $this->getPhoneFormComponent()->hidden(fn ($get) => $get('login_option') !== 'phone'),
+            ]);
     }
 
     protected function getOtpCodeFormComponent(): Component
@@ -230,24 +243,14 @@ class Login extends BaseLogin
         $this->step = 1;
     }
 
-    /**
-     * @return array<Action | ActionGroup>
-     */
     public function getFormActions(): array
     {
-        return [
-            $this->getAuthenticateFormAction(),
-        ];
+        return [$this->getAuthenticateFormAction()];
     }
 
-    /**
-     * @return array<Action | ActionGroup>
-     */
     public function getOtpFormActions(): array
     {
-        return [
-            $this->getSendOtpAction(),
-        ];
+        return [$this->getSendOtpAction()];
     }
 
     protected function getSendOtpAction(): Action
@@ -257,13 +260,6 @@ class Login extends BaseLogin
             ->submit('sendOtp');
     }
 
-    protected function goBackAction(): ActionComponent
-    {
-        return ActionComponent::make('go-back')
-            ->label(__('filament-otp-login::translations.view.go_back'))
-            ->action(fn () => $this->goBack());
-    }
-
     protected function getAuthenticateFormAction(): Action
     {
         return Action::make('authenticate')
@@ -271,22 +267,26 @@ class Login extends BaseLogin
             ->submit('authenticate');
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
     protected function getCredentialsFromFormData(array $data): array
     {
         return [
-            'email' => $data['email'],
+            $data['login_option'] => $data[$data['login_option']],
             'password' => $data['password'],
         ];
     }
 
-    protected function checkCredentials($data): void
+    protected function checkCredentials(array $data): void
     {
-        if (! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
+        if (!Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
             $this->throwFailureValidationException();
         }
+    }
+
+    protected function throwFailureValidationException(): never
+    {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'data.phone' => __('filament-panels::pages/auth/login.messages.failed'),
+            'data.email' => __('filament-panels::pages/auth/login.messages.failed'),
+        ]);
     }
 }

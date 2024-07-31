@@ -21,11 +21,17 @@ return [
 
     'notifications' => [
         'title' => 'OTP Code Sent',
-        'body' => 'The verification code has been sent to your e-mail address. It will be valid in :seconds seconds.',
+        'body' => 'The verification code has been sent to your :type. It will be valid in :seconds seconds.',
     ],
 
     'validation' => [
         'invalid_code' => 'The code you entered is invalid.',
         'expired_code' => 'The code you entered has expired.',
     ],
+
+    'email' => 'Email',
+    'phone' => 'Phone',
+
+    'email_address' => 'Email Address',
+    'phone_number' => 'Phone Number',
 ];
