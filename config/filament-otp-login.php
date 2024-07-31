@@ -13,7 +13,7 @@ return [
     * 
     * - 'email': Show only the email field.
     * - 'phone': Show only the phone field.
-    * - '': Show both email and phone fields.
+    * - null: Show both email and phone fields.
     */
-    'login_option' => ''
+    'login_option' => null
 ];
