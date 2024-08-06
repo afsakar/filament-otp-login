@@ -3,6 +3,7 @@
 namespace Afsakar\FilamentOtpLogin\Filament\Pages;
 
 use Afsakar\FilamentOtpLogin\Filament\Forms\OtpInput;
+use Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly;
 use Afsakar\FilamentOtpLogin\Models\OtpCode;
 use Afsakar\FilamentOtpLogin\Notifications\SendOtpCode;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
@@ -156,12 +157,6 @@ class Login extends BaseLogin
         $data = $this->form->getState();
 
         $this->checkCredentials($data);
-
-        $this->generateCode();
-
-        $this->sendOtpToUser($this->otpCode);
-
-        $this->step = 2;
     }
 
     #[On('resendCode')]
@@ -283,10 +278,34 @@ class Login extends BaseLogin
         ];
     }
 
+    protected function checkCanLoginDirectly($data)
+    {
+        $user = Filament::auth()->getProvider()->retrieveByCredentials($this->getCredentialsFromFormData($data)); // @phpstan-ignore-line
+
+        if (
+            ($user instanceof CanLoginDirectly) &&
+            ($user->canLoginDirectly())
+        ) {
+            $this->doLogin();
+
+            $path = Filament::getCurrentPanel()->getPath();
+
+            return redirect()->intended($path);
+        } else {
+            $this->generateCode();
+
+            $this->sendOtpToUser($this->otpCode);
+
+            $this->step = 2;
+        }
+    }
+
     protected function checkCredentials($data): void
     {
         if (! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
             $this->throwFailureValidationException();
         }
+
+        $this->checkCanLoginDirectly($data);
     }
 }
