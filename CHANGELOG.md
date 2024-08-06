@@ -2,6 +2,17 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.3.4 - 2024-08-06
+
+### What's Changed
+
+* Now you can ignore specific users from OTP Login and they login directly without OTP #9
+* Bump dependabot/fetch-metadata from 2.1.0 to 2.2.0 by @dependabot in https://github.com/afsakar/filament-otp-login/pull/7
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.2...v1.3.3
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.3...v1.3.4
+
 ## v1.3.2 - 2024-07-05
 
 - Fixed a bug where the paste action was not working on firefox. #6
