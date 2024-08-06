@@ -66,6 +66,24 @@ use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
     }
 ```
 
+If you want to ignore specific user groups from OTP login just implement the `Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly` trait in your User model.
+
+```php
+use Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly;
+
+class User extends Authenticatable implements CanLoginDirectly
+{
+    use HasFactory, Notifiable;
+
+    // other user model code
+
+    public function canLoginDirectly(): bool
+    {
+        return str($this->email)->endsWith('@example.com');
+    }
+}
+```
+
 _*Note:* For medium and large scale applications, you only need to run "php artisan model:prune" command as cron to prevent the otp_code table from bloating and performance issues._
 
 ## Testing
