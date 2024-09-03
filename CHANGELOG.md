@@ -2,6 +2,12 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.3.5 - 2024-09-03
+
+* Update for customized Login Page, now you can add custom pages for every panel.
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.4...v1.3.5
+
 ## v1.3.4 - 2024-08-06
 
 ### What's Changed
