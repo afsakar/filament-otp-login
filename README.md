@@ -86,6 +86,40 @@ class User extends Authenticatable implements CanLoginDirectly
 
 _*Note:* For medium and large scale applications, you only need to run "php artisan model:prune" command as cron to prevent the otp_code table from bloating and performance issues._
 
+## Custom Login Page
+
+If you want to customize the login page, you can extend the `\Afsakar\FilamentOtpLogin\Filament\Pages\Login` page and set your custom login page to plugin in the panel provider file with `loginPage` method.
+
+```php
+<?php
+
+namespace App\Filament\Pages;
+
+use Afsakar\FilamentOtpLogin\Filament\Pages\Login as OtpLogin;
+use Illuminate\Contracts\Support\Htmlable;
+
+class OverrideLogin extends OtpLogin
+{
+    public function getHeading(): string | Htmlable
+    {
+        return 'Example Login Heading';
+    }
+}
+```
+
+```php
+use App\Filament\Pages\OverrideLogin;
+
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->plugins([
+                FilamentOtpLoginPlugin::make()
+                    ->loginPage(OverrideLogin::class),
+            ]);
+    }
+```
+
 ## Testing
 
 ```bash

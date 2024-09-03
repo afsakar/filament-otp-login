@@ -8,6 +8,8 @@ use Filament\Panel;
 
 class FilamentOtpLoginPlugin implements Plugin
 {
+    public string $login = Login::class;
+
     public function getId(): string
     {
         return 'filament-otp-login';
@@ -15,7 +17,7 @@ class FilamentOtpLoginPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $panel->login(Login::class);
+        $panel->login($this->login);
     }
 
     public function boot(Panel $panel): void
@@ -34,5 +36,12 @@ class FilamentOtpLoginPlugin implements Plugin
         $plugin = filament(app(static::class)->getId());
 
         return $plugin;
+    }
+
+    public function loginPage(string $login): static
+    {
+        $this->login = $login;
+
+        return $this;
     }
 }
