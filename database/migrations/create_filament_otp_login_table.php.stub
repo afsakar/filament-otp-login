@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $table_name = config('filament-otp-login.table_name');
 
@@ -17,5 +17,12 @@ return new class extends Migration
             $table->dateTime('expires_at');
             $table->timestamps();
         });
+    }
+
+    public function down(): void
+    {
+        $table_name = config('filament-otp-login.table_name');
+
+        Schema::dropIfExists($table_name);
     }
 };
