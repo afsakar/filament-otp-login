@@ -150,4 +150,4 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 ## Supported By
 
-<img src="https://res.cloudinary.com/rupadana/image/upload/v1707040287/phpstorm_xjblau.png" width="50px" height="50px"></img>
+<a href="https://www.jetbrains.com/phpstorm/" target="_blank"><img src="https://res.cloudinary.com/rupadana/image/upload/v1707040287/phpstorm_xjblau.png" width="50px" height="50px"></img></a>
