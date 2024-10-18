@@ -2,6 +2,12 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.3.6 - 2024-10-18
+
+Add loading indicator to login form submit button
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.5...v1.3.6
+
 ## v1.3.5 - 2024-09-03
 
 * Update for customized Login Page, now you can add custom pages for every panel.
