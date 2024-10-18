@@ -15,10 +15,17 @@
             <x-filament-panels::form wire:submit="sendOtp">
                 {{ $this->form }}
 
-                <x-filament-panels::form.actions
-                    :actions="$this->getCachedFormActions()"
-                    :full-width="true"
-                />
+                <x-filament::button
+                    type="submit"
+                    label="Giriş"
+                    class="flex items-center justify-center gap-2 w-full"
+                    wire:loading.attr="disabled"
+                >
+                    <x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="sendOtp" />
+                    <span wire:loading.remove wire:target="sendOtp">
+                        {{ __('filament-panels::pages/auth/login.form.actions.authenticate.label') }}
+                    </span>
+                </x-filament::button>
             </x-filament-panels::form>
             @break
         @default
