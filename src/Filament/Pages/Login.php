@@ -44,7 +44,6 @@ class Login extends BaseLogin
 
     public function mount(): void
     {
-
         if (Filament::auth()->check()) {
             redirect()->intended(Filament::getUrl());
         }
@@ -110,7 +109,7 @@ class Login extends BaseLogin
 
     public function verifyCode(): void
     {
-        $code = OtpCode::whereCode($this->data['otp'])->whereEmail($this->data['email'])->first();
+        $code = OtpCode::whereCode($this->data['otp'])->whereEmail($this->getOtpEmail())->first();
 
         if (! $code) {
             throw ValidationException::withMessages([
@@ -133,14 +132,12 @@ class Login extends BaseLogin
             $length = config('filament-otp-login.otp_code.length');
 
             $code = str_pad(rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
-        } while (OtpCode::whereCode($code)->whereEmail($this->data['email'])->exists());
+        } while (OtpCode::whereCode($code)->whereEmail($this->getOtpEmail())->exists());
 
         $this->otpCode = $code;
 
-        $data = $this->form->getState();
-
         OtpCode::updateOrCreate([
-            'email' => $data['email'],
+            'email' => $this->getOtpEmail(),
         ], [
             'code' => $this->otpCode,
             'expires_at' => now()->addSeconds(config('filament-otp-login.otp_code.expires')),
@@ -151,7 +148,6 @@ class Login extends BaseLogin
 
     public function sendOtp(): void
     {
-
         $this->rateLimiter();
 
         $data = $this->form->getState();
@@ -171,7 +167,7 @@ class Login extends BaseLogin
 
     protected function sendOtpToUser(string $otpCode): void
     {
-        $this->email = $this->data['email'];
+        $this->email = $this->getOtpEmail();
 
         $this->notify(new SendOtpCode($otpCode));
 
@@ -180,6 +176,11 @@ class Login extends BaseLogin
             ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => config('filament-otp-login.otp_code.expires')]))
             ->success()
             ->send();
+    }
+
+    protected function getOtpEmail(): string
+    {
+        return $this->data['email'];
     }
 
     public function form(Form $form): Form
