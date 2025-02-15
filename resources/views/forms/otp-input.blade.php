@@ -75,7 +75,7 @@
                 e.preventDefault();
             },
         }">
-        <div class="flex justify-between gap-6 pt-3 pb-2 h-16">
+        <div class="flex justify-between gap-6 pt-3 pb-2 h-16" dir="{{config('app.locale') == 'fa' || config('app.locale') == 'ar' ? 'ltr' : ''}}">
 
             @foreach(range(1, $numberLength) as $column)
                 <x-filament::input.wrapper
