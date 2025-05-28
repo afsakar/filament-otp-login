@@ -173,7 +173,9 @@ class Login extends BaseLogin
     {
         $this->email = $this->data['email'];
 
-        $this->notify(new SendOtpCode($otpCode));
+        $notificationClass = config('filament-otp-login.notification_class', SendOtpCode::class);
+
+        $this->notify(new $notificationClass($otpCode));
 
         Notification::make()
             ->title(__('filament-otp-login::translations.notifications.title'))
