@@ -2,6 +2,22 @@
 
 All notable changes to `filament-otp-login` will be documented in this file.
 
+## v1.4.0 - 2025-05-28
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 2.2.0 to 2.3.0 by @dependabot in https://github.com/afsakar/filament-otp-login/pull/16
+* Bump aglipanci/laravel-pint-action from 2.4 to 2.5 by @dependabot in https://github.com/afsakar/filament-otp-login/pull/17
+* Bump dependabot/fetch-metadata from 2.3.0 to 2.4.0 by @dependabot in https://github.com/afsakar/filament-otp-login/pull/19
+* Allow custom notification class for people who would like to use othe… by @maukoese in https://github.com/afsakar/filament-otp-login/pull/18
+* Add reset otp input event and method to blade
+
+### New Contributors
+
+* @maukoese made their first contribution in https://github.com/afsakar/filament-otp-login/pull/18
+
+**Full Changelog**: https://github.com/afsakar/filament-otp-login/compare/v1.3.6...v1.4.0
+
 ## v1.3.6 - 2024-10-18
 
 Add loading indicator to login form submit button
