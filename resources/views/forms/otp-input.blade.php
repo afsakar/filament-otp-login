@@ -74,7 +74,19 @@
                 this.$refs[previous] && this.$refs[previous].select();
                 e.preventDefault();
             },
-        }">
+
+            resetOtp() {
+                const inputs = Array.from(Array(this.length));
+
+                inputs.forEach((element, i) => {
+                    this.$refs[(i+1)].focus();
+                    this.$refs[(i+1)].value = '';
+                });
+                this.$refs[1].focus();
+            }
+        }"
+        x-on:reset-otp.window="resetOtp"
+    >
         <div class="flex justify-between gap-6 pt-3 pb-2 h-16">
 
             @foreach(range(1, $numberLength) as $column)
