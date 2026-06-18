@@ -1,7 +1,7 @@
 <x-filament-panels::page.simple>
     @if (filament()->hasRegistration())
         <x-slot name="subheading">
-            {{ __('filament-panels::pages/auth/login.actions.register.before') }}
+            {{ __('filament-panels::auth/pages/login.actions.register.before') }}
 
             {{ $this->registerAction }}
         </x-slot>
@@ -23,7 +23,7 @@
                 >
                     <x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="sendOtp" />
                     <span wire:loading.remove wire:target="sendOtp">
-                        {{ __('filament-panels::pages/auth/login.form.actions.authenticate.label') }}
+                        {{ __('filament-panels::auth/pages/login.form.actions.authenticate.label') }}
                     </span>
                 </x-filament::button>
             </x-filament-panels::form>

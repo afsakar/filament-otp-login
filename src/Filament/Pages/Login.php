@@ -10,37 +10,38 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Actions\Action as ActionComponent;
-use Filament\Forms\Components\Component;
-use Filament\Forms\Form;
-use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Notifications\Notification;
-use Filament\Pages\Auth\Login as BaseLogin;
-use Filament\Pages\Concerns\InteractsWithFormActions;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Schema;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 
 class Login extends BaseLogin
 {
-    use InteractsWithFormActions;
     use Notifiable;
     use WithRateLimiting;
-
-    protected static string $view = 'filament-otp-login::pages.login';
 
     public ?array $data = [];
 
     public int $step = 1;
 
-    private int | string $otpCode = '';
+    private string $otpCode = '';
 
     public string $email = '';
 
     public int $countDown = 120;
+
+    public function getView(): string
+    {
+        return 'filament-otp-login::pages.login';
+    }
 
     public function mount(): void
     {
@@ -51,7 +52,7 @@ class Login extends BaseLogin
 
         $this->form->fill();
 
-        $this->countDown = config('filament-otp-login.otp_code.expires');
+        $this->countDown = Config::integer('filament-otp-login.otp_code.expires');
     }
 
     protected function rateLimiter()
@@ -60,11 +61,11 @@ class Login extends BaseLogin
             $this->rateLimit(5);
         } catch (TooManyRequestsException $exception) {
             Notification::make()
-                ->title(__('filament-panels::pages/auth/login.notifications.throttled.title', [
+                ->title(__('filament-panels::auth/pages/login.notifications.throttled.title', [
                     'seconds' => $exception->secondsUntilAvailable,
                     'minutes' => ceil($exception->secondsUntilAvailable / 60),
                 ]))
-                ->body(array_key_exists('body', __('filament-panels::pages/auth/login.notifications.throttled') ?: []) ? __('filament-panels::pages/auth/login.notifications.throttled.body', [
+                ->body(array_key_exists('body', __('filament-panels::auth/pages/login.notifications.throttled') ?: []) ? __('filament-panels::auth/pages/login.notifications.throttled.body', [
                     'seconds' => $exception->secondsUntilAvailable,
                     'minutes' => ceil($exception->secondsUntilAvailable / 60),
                 ]) : null)
@@ -130,7 +131,7 @@ class Login extends BaseLogin
     public function generateCode(): void
     {
         do {
-            $length = config('filament-otp-login.otp_code.length');
+            $length = Config::integer('filament-otp-login.otp_code.length');
 
             $code = str_pad(rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
         } while (OtpCode::whereCode($code)->whereEmail($this->data['email'])->exists());
@@ -143,7 +144,7 @@ class Login extends BaseLogin
             'email' => $data['email'],
         ], [
             'code' => $this->otpCode,
-            'expires_at' => now()->addSeconds(config('filament-otp-login.otp_code.expires')),
+            'expires_at' => now()->addSeconds(Config::integer('filament-otp-login.otp_code.expires')),
         ]);
 
         $this->dispatch('countDownStarted');
@@ -179,39 +180,28 @@ class Login extends BaseLogin
 
         Notification::make()
             ->title(__('filament-otp-login::translations.notifications.title'))
-            ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => config('filament-otp-login.otp_code.expires')]))
+            ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => Config::integer('filament-otp-login.otp_code.expires')]))
             ->success()
             ->send();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form;
+        return $schema
+            ->components([
+                $this->getEmailFormComponent(),
+                $this->getPasswordFormComponent(),
+                $this->getRememberFormComponent(),
+            ]);
     }
 
-    /**
-     * @return array<int | string, string | Form>
-     */
-    protected function getForms(): array
+    public function otpForm(Schema $schema): Schema
     {
-        return [
-            'form' => $this->form(
-                $this->makeForm()
-                    ->schema([
-                        $this->getEmailFormComponent(),
-                        $this->getPasswordFormComponent(),
-                        $this->getRememberFormComponent(),
-                    ])
-                    ->statePath('data'),
-            ),
-            'otpForm' => $this->form(
-                $this->makeForm()
-                    ->schema([
-                        $this->getOtpCodeFormComponent(),
-                    ])
-                    ->statePath('data'),
-            ),
-        ];
+        return $schema
+            ->components([
+                $this->getOtpCodeFormComponent(),
+            ])
+            ->statePath('data');
     }
 
     protected function getOtpCodeFormComponent(): Component
@@ -254,17 +244,10 @@ class Login extends BaseLogin
             ->submit('sendOtp');
     }
 
-    protected function goBackAction(): ActionComponent
-    {
-        return ActionComponent::make('go-back')
-            ->label(__('filament-otp-login::translations.view.go_back'))
-            ->action(fn () => $this->goBack());
-    }
-
     protected function getAuthenticateFormAction(): Action
     {
         return Action::make('authenticate')
-            ->label(__('filament-panels::pages/auth/login.form.actions.authenticate.label'))
+            ->label(__('filament-panels::auth/pages/login.form.actions.authenticate.label'))
             ->submit('authenticate');
     }
 

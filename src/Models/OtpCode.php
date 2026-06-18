@@ -2,6 +2,7 @@
 
 namespace Afsakar\FilamentOtpLogin\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property string $code
  * @property string $email
- * @property \Carbon\Carbon $expires_at
+ * @property Carbon $expires_at
  */
 class OtpCode extends Model
 {
