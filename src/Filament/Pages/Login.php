@@ -133,7 +133,7 @@ class Login extends BaseLogin
         do {
             $length = Config::integer('filament-otp-login.otp_code.length');
 
-            $code = str_pad(rand(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
+            $code = str_pad(random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
         } while (OtpCode::whereCode($code)->whereEmail($this->data['email'])->exists());
 
         $this->otpCode = $code;
