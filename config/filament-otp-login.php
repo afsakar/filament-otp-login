@@ -1,5 +1,7 @@
 <?php
 
+use Afsakar\FilamentOtpLogin\Notifications\SendOtpCode;
+
 return [
     'table_name' => 'otp_codes',
 
@@ -8,5 +10,5 @@ return [
         'expires' => env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120),
     ],
 
-    'notification_class' => \Afsakar\FilamentOtpLogin\Notifications\SendOtpCode::class,
+    'notification_class' => SendOtpCode::class,
 ];

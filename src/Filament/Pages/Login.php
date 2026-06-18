@@ -36,7 +36,7 @@ class Login extends BaseLogin
 
     public int $step = 1;
 
-    private int | string $otpCode = '';
+    private string $otpCode = '';
 
     public string $email = '';
 
