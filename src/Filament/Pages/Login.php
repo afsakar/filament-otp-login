@@ -58,7 +58,10 @@ class Login extends BaseLogin
     protected function rateLimiter()
     {
         try {
-            $this->rateLimit(5);
+            $this->rateLimit(
+                Config::integer('filament-otp-login.rate_limit.attempts'),
+                Config::integer('filament-otp-login.rate_limit.decay_seconds'),
+            );
         } catch (TooManyRequestsException $exception) {
             Notification::make()
                 ->title(__('filament-panels::auth/pages/login.notifications.throttled.title', [

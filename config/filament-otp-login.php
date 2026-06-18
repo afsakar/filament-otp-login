@@ -10,5 +10,10 @@ return [
         'expires' => (int) env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120),
     ],
 
+    'rate_limit' => [
+        'attempts' => (int) env('OTP_LOGIN_RATE_LIMIT_ATTEMPTS', 5),
+        'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
+    ],
+
     'notification_class' => SendOtpCode::class,
 ];
