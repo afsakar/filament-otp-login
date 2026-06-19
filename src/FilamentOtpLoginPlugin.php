@@ -2,13 +2,16 @@
 
 namespace Afsakar\FilamentOtpLogin;
 
+use Afsakar\FilamentOtpLogin\Concerns\HasPluginConfiguration;
 use Afsakar\FilamentOtpLogin\Filament\Pages\Login;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
 class FilamentOtpLoginPlugin implements Plugin
 {
-    public string $login = Login::class;
+    use HasPluginConfiguration;
+
+    protected string $login = Login::class;
 
     public function getId(): string
     {

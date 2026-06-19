@@ -15,7 +15,7 @@ class SendOtpCode extends Notification
      *
      * @return void
      */
-    public function __construct(public string $code)
+    public function __construct(public string $code, public int $expiresIn = 120)
     {
         //
     }
@@ -43,7 +43,7 @@ class SendOtpCode extends Notification
             ->subject(__('filament-otp-login::translations.mail.subject'))
             ->greeting(__('filament-otp-login::translations.mail.greeting'))
             ->line(__('filament-otp-login::translations.mail.line1', ['code' => $this->code]))
-            ->line(__('filament-otp-login::translations.mail.line2', ['seconds' => config('filament-otp-login.otp_code.expires')]))
+            ->line(__('filament-otp-login::translations.mail.line2', ['seconds' => $this->expiresIn]))
             ->line(__('filament-otp-login::translations.mail.line3'))
             ->salutation(__('filament-otp-login::translations.mail.salutation', ['app_name' => config('app.name')]));
     }

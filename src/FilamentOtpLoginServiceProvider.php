@@ -78,6 +78,7 @@ class FilamentOtpLoginServiceProvider extends PackageServiceProvider
     {
         return [
             'create_filament_otp_login_table',
+            'rename_filament_otp_login_email_column',
         ];
     }
 }

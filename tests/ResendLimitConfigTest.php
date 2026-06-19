@@ -1,11 +1,9 @@
 <?php
 
 use Afsakar\FilamentOtpLogin\Filament\Pages\Login;
+use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
 
-it('uses configured resend limit values', function () {
-    config()->set('filament-otp-login.resend_limit.attempts', 2);
-    config()->set('filament-otp-login.resend_limit.decay_seconds', 180);
-
+it('uses plugin resend limit values', function () {
     $page = new class extends Login
     {
         public array $rateLimitArguments = [];
@@ -18,6 +16,11 @@ it('uses configured resend limit values', function () {
         protected function rateLimit($maxAttempts, $decaySeconds = 60, $method = null, $component = null)
         {
             $this->rateLimitArguments = [$maxAttempts, $decaySeconds, $method];
+        }
+
+        protected function plugin(): FilamentOtpLoginPlugin
+        {
+            return FilamentOtpLoginPlugin::make()->resendLimit(2, 180);
         }
     };
 

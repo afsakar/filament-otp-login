@@ -2,14 +2,16 @@
 
 namespace Afsakar\FilamentOtpLogin\Models;
 
+use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 /**
  * @property string $code
- * @property string $email
+ * @property string $identifier
  * @property Carbon $expires_at
  */
 class OtpCode extends Model
@@ -25,7 +27,12 @@ class OtpCode extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setTable(config('filament-otp-login.table_name'));
+
+        try {
+            $this->setTable(FilamentOtpLoginPlugin::get()->getTableName());
+        } catch (Throwable) {
+            $this->setTable('otp_codes');
+        }
     }
 
     public function prunable(): Builder

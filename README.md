@@ -23,10 +23,9 @@ php artisan vendor:publish --tag="filament-otp-login-migrations"
 php artisan migrate
 ```
 
-You can publish the config and translations files with:
+You can publish the translations files with:
 
 ```bash
-php artisan vendor:publish --tag="filament-otp-login-config"
 php artisan vendor:publish --tag="filament-otp-login-translations"
 ```
 
@@ -40,53 +39,30 @@ php artisan vendor:publish --tag="filament-otp-login-views"
 
 This release targets Filament `^4.0 || ^5.0` and PHP `^8.2`. Filament v2/v3 projects must upgrade Filament before upgrading this package.
 
-After upgrading, refresh your published config or manually add the new keys:
+Configuration moved from the config file to `FilamentOtpLoginPlugin`, so define settings per panel:
 
 ```php
-'rate_limit' => [
-    'attempts' => (int) env('OTP_LOGIN_RATE_LIMIT_ATTEMPTS', 5),
-    'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
-],
-
-'resend_limit' => [
-    'attempts' => (int) env('OTP_LOGIN_RESEND_LIMIT_ATTEMPTS', 3),
-    'decay_seconds' => (int) env('OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS', 300),
-],
-
-'passwordless' => (bool) env('OTP_LOGIN_PASSWORDLESS', false),
+FilamentOtpLoginPlugin::make()
+    ->otpCode(length: 6, expiresIn: 120)
+    ->rateLimit(attempts: 5, decaySeconds: 60)
+    ->resendLimit(attempts: 3, decaySeconds: 300)
+    ->passwordless(false)
+    ->notification(\Afsakar\FilamentOtpLogin\Notifications\SendOtpCode::class);
 ```
+
+The published config file is intentionally empty.
 
 If you published the login views, publish them again or update them for Filament v4/v5 components and translation namespaces. The package now uses Filament's native `OneTimeCodeInput`, so remove any custom references to `Afsakar\FilamentOtpLogin\Filament\Forms\OtpInput`.
 
-OTP codes are now stored as hashes. No migration is needed, but any active OTP code created before the upgrade will no longer verify; users can request a new code.
-
-This is the contents of the published config file:
+The OTP table column changed from `email` to `identifier`. Publish and run the new migration, or add this to your own upgrade migration:
 
 ```php
-return [
-    'table_name' => 'otp_codes', // Table name to store OTP codes
-
-    'otp_code' => [
-        'length' => (int) env('OTP_LOGIN_CODE_LENGTH', 6), // Length of the OTP code
-        'expires' => (int) env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120), // Expiration time of the OTP code in seconds
-    ],
-
-    'rate_limit' => [
-        'attempts' => (int) env('OTP_LOGIN_RATE_LIMIT_ATTEMPTS', 5),
-        'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
-    ],
-
-    'resend_limit' => [
-        'attempts' => (int) env('OTP_LOGIN_RESEND_LIMIT_ATTEMPTS', 3),
-        'decay_seconds' => (int) env('OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS', 300),
-    ],
-
-    'passwordless' => (bool) env('OTP_LOGIN_PASSWORDLESS', false),
-
-    'notification_class' => \Afsakar\FilamentOtpLogin\Notifications\SendOtpCode::class,
-];
-
+Schema::table('otp_codes', function (Blueprint $table) {
+    $table->renameColumn('email', 'identifier');
+});
 ```
+
+OTP codes are now stored as hashes. Any active OTP code created before the upgrade will no longer verify; users can request a new code.
 
 ## Usage
 
@@ -99,10 +75,23 @@ use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
     {
         return $panel
             ->plugins([
-                FilamentOtpLoginPlugin::make(),
+                FilamentOtpLoginPlugin::make()
+                    ->otpCode(length: 6, expiresIn: 120)
+                    ->rateLimit(attempts: 5, decaySeconds: 60)
+                    ->resendLimit(attempts: 3, decaySeconds: 300),
             ]);
     }
 ```
+
+For phone based login:
+
+```php
+FilamentOtpLoginPlugin::make()
+    ->identifierFormField('phone', label: 'Phone', type: 'tel')
+    ->userIdentifierColumn('phone');
+```
+
+Use `->tableName()`, `->identifierColumn()`, `->userModel()`, `->passwordless()`, and `->notification()` when a panel needs different behavior.
 
 If you want to ignore specific user groups from OTP login just implement the `Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly` trait in your User model.
 
@@ -126,9 +115,7 @@ _*Note:* For medium and large scale applications, you only need to run "php arti
 
 OTP codes are hashed before they are stored in the database.
 
-To enable passwordless login, set `OTP_LOGIN_PASSWORDLESS=true`. When enabled, users log in with email and OTP only.
-
-Use `OTP_LOGIN_RATE_LIMIT_ATTEMPTS` / `OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS` to tune login attempts, and `OTP_LOGIN_RESEND_LIMIT_ATTEMPTS` / `OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS` to tune resend attempts.
+To enable passwordless login, call `->passwordless()`. When enabled, users log in with the configured identifier and OTP only.
 
 ## Custom Login Page
 
@@ -186,7 +173,7 @@ class SendOtpCode extends Notification
      *
      * @return void
      */
-    public function __construct(public string $code)
+    public function __construct(public string $code, public int $expiresIn)
     {
         //
     }
@@ -199,7 +186,7 @@ class SendOtpCode extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail', 'sms'];
+        return ['mail'];
     }
 
     /**
@@ -214,38 +201,23 @@ class SendOtpCode extends Notification
             ->subject(__('filament-otp-login::translations.mail.subject'))
             ->greeting(__('filament-otp-login::translations.mail.greeting'))
             ->line(__('filament-otp-login::translations.mail.line1', ['code' => $this->code]))
-            ->line(__('filament-otp-login::translations.mail.line2', ['seconds' => config('filament-otp-login.otp_code.expires')]))
+            ->line(__('filament-otp-login::translations.mail.line2', ['seconds' => $this->expiresIn]))
             ->line(__('filament-otp-login::translations.mail.line3'))
             ->salutation(__('filament-otp-login::translations.mail.salutation', ['app_name' => config('app.name')]));
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
-    public function toSms($notifiable)
-    {
-        return [
-            'message' => __("Hello {$notifiable->name}, your OTP code is: {$this->code}"),
-        ];
-    }
 }
 
 ```
 
-Then update the config file to use your custom notification class.
+Then update the plugin to use your custom notification class.
 
 ```php
-<?php
-return [
-    //... other config options
-
-    'notification_class' => \App\Notifications\SendOtpCode::class,
-];
-
+FilamentOtpLoginPlugin::make()
+    ->notification(\App\Notifications\SendOtpCode::class);
 ```
+
+For SMS or WhatsApp, install the provider notification channel in your application, return that channel from `via()`, and use the configured identifier as the recipient.
 
 
 ## Testing

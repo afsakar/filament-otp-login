@@ -2,9 +2,9 @@
 
 namespace Afsakar\FilamentOtpLogin\Filament\Pages;
 
+use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
 use Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly;
 use Afsakar\FilamentOtpLogin\Models\OtpCode;
-use Afsakar\FilamentOtpLogin\Notifications\SendOtpCode;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Filament\Actions\Action;
@@ -13,13 +13,13 @@ use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\OneTimeCodeInput;
+use Filament\Forms\Components\TextInput;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
@@ -38,7 +38,19 @@ class Login extends BaseLogin
 
     public string $email = '';
 
+    public string $identifier = '';
+
     public int $countDown = 120;
+
+    protected function plugin(): FilamentOtpLoginPlugin
+    {
+        return FilamentOtpLoginPlugin::get();
+    }
+
+    protected function identifier(): string
+    {
+        return (string) ($this->data[$this->plugin()->getIdentifierFormField()] ?? '');
+    }
 
     public function getView(): string
     {
@@ -52,7 +64,7 @@ class Login extends BaseLogin
 
     protected function isPasswordless(): bool
     {
-        return Config::boolean('filament-otp-login.passwordless');
+        return $this->plugin()->isPasswordless();
     }
 
     public function mount(): void
@@ -64,15 +76,15 @@ class Login extends BaseLogin
 
         $this->form->fill();
 
-        $this->countDown = Config::integer('filament-otp-login.otp_code.expires');
+        $this->countDown = $this->plugin()->getOtpCodeExpiresIn();
     }
 
     protected function rateLimiter()
     {
         try {
             $this->rateLimit(
-                Config::integer('filament-otp-login.rate_limit.attempts'),
-                Config::integer('filament-otp-login.rate_limit.decay_seconds'),
+                $this->plugin()->getRateLimitAttempts(),
+                $this->plugin()->getRateLimitDecaySeconds(),
             );
         } catch (TooManyRequestsException $exception) {
             Notification::make()
@@ -94,8 +106,8 @@ class Login extends BaseLogin
     protected function resendRateLimiter(): void
     {
         $this->rateLimit(
-            Config::integer('filament-otp-login.resend_limit.attempts'),
-            Config::integer('filament-otp-login.resend_limit.decay_seconds'),
+            $this->plugin()->getResendLimitAttempts(),
+            $this->plugin()->getResendLimitDecaySeconds(),
             method: 'resendCode',
         );
     }
@@ -138,7 +150,9 @@ class Login extends BaseLogin
 
     public function verifyCode(): void
     {
-        $code = OtpCode::whereEmail($this->data['email'])->first();
+        $code = OtpCode::query()
+            ->where($this->plugin()->getIdentifierColumn(), $this->identifier())
+            ->first();
 
         if ((! $code) || (! Hash::check($this->data['otp'], $code->code))) {
             throw ValidationException::withMessages([
@@ -157,17 +171,15 @@ class Login extends BaseLogin
 
     public function generateCode(): void
     {
-        $length = Config::integer('filament-otp-login.otp_code.length');
+        $length = $this->plugin()->getOtpCodeLength();
 
         $this->otpCode = str_pad(random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
 
-        $data = $this->form->getState();
-
         OtpCode::updateOrCreate([
-            'email' => $data['email'],
+            $this->plugin()->getIdentifierColumn() => $this->identifier(),
         ], [
             'code' => Hash::make($this->otpCode),
-            'expires_at' => now()->addSeconds(Config::integer('filament-otp-login.otp_code.expires')),
+            'expires_at' => now()->addSeconds($this->plugin()->getOtpCodeExpiresIn()),
         ]);
 
         $this->dispatch('countDownStarted');
@@ -196,15 +208,16 @@ class Login extends BaseLogin
 
     protected function sendOtpToUser(string $otpCode): void
     {
-        $this->email = $this->data['email'];
+        $this->identifier = $this->identifier();
+        $this->email = $this->identifier;
 
-        $notificationClass = config('filament-otp-login.notification_class', SendOtpCode::class);
+        $notificationClass = $this->plugin()->getNotificationClass();
 
-        $this->notify(new $notificationClass($otpCode));
+        $this->notify(new $notificationClass($otpCode, $this->plugin()->getOtpCodeExpiresIn()));
 
         Notification::make()
             ->title(__('filament-otp-login::translations.notifications.title'))
-            ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => Config::integer('filament-otp-login.otp_code.expires')]))
+            ->body(__('filament-otp-login::translations.notifications.body', ['seconds' => $this->plugin()->getOtpCodeExpiresIn()]))
             ->success()
             ->send();
     }
@@ -238,7 +251,7 @@ class Login extends BaseLogin
     {
         return OneTimeCodeInput::make('otp')
             ->label(__('filament-otp-login::translations.otp_code'))
-            ->length(Config::integer('filament-otp-login.otp_code.length'))
+            ->length($this->plugin()->getOtpCodeLength())
             ->hint(new HtmlString('<button type="button" wire:click="goBack()" class="focus:outline-none font-bold focus:underline hover:text-primary-400 text-primary-600 text-sm">' . __('filament-otp-login::translations.view.go_back') . '</button>'))
             ->required();
     }
@@ -288,16 +301,15 @@ class Login extends BaseLogin
      */
     protected function getCredentialsFromFormData(array $data): array
     {
+        $credentials = [
+            $this->plugin()->getUserIdentifierColumn() => $data[$this->plugin()->getIdentifierFormField()],
+        ];
+
         if ($this->isPasswordless()) {
-            return [
-                'email' => $data['email'],
-            ];
+            return $credentials;
         }
 
-        return [
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ];
+        return $credentials + ['password' => $data['password']];
     }
 
     /**
@@ -305,7 +317,11 @@ class Login extends BaseLogin
      */
     protected function getUserFromFormData(array $data): Authenticatable
     {
-        $user = Filament::auth()->getProvider()->retrieveByCredentials($this->getCredentialsFromFormData($data)); // @phpstan-ignore-line
+        $userModel = $this->plugin()->getUserModel();
+
+        $user = $userModel::query()
+            ->where($this->plugin()->getUserIdentifierColumn(), $data[$this->plugin()->getIdentifierFormField()])
+            ->first();
 
         if (! $user) {
             $this->throwFailureValidationException();
@@ -314,6 +330,31 @@ class Login extends BaseLogin
         $this->ensureUserCanAccessPanel($user);
 
         return $user;
+    }
+
+    protected function getEmailFormComponent(): Component
+    {
+        $input = TextInput::make($this->plugin()->getIdentifierFormField())
+            ->label($this->plugin()->getIdentifierLabel())
+            ->required()
+            ->autocomplete()
+            ->autofocus();
+
+        return match ($this->plugin()->getIdentifierType()) {
+            'email' => $input->email(),
+            'tel', 'phone' => $input->tel(),
+            default => $input,
+        };
+    }
+
+    public function routeNotificationForMail(): string
+    {
+        return $this->identifier;
+    }
+
+    public function routeNotificationForVonage(): string
+    {
+        return $this->identifier;
     }
 
     protected function ensureUserCanAccessPanel(?Authenticatable $user): void

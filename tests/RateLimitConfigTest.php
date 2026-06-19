@@ -1,11 +1,9 @@
 <?php
 
 use Afsakar\FilamentOtpLogin\Filament\Pages\Login;
+use Afsakar\FilamentOtpLogin\FilamentOtpLoginPlugin;
 
-it('uses configured rate limit values', function () {
-    config()->set('filament-otp-login.rate_limit.attempts', 7);
-    config()->set('filament-otp-login.rate_limit.decay_seconds', 90);
-
+it('uses plugin rate limit values', function () {
     $page = new class extends Login
     {
         public array $rateLimitArguments = [];
@@ -18,6 +16,11 @@ it('uses configured rate limit values', function () {
         protected function rateLimit($maxAttempts, $decaySeconds = 60, $method = null, $component = null)
         {
             $this->rateLimitArguments = [$maxAttempts, $decaySeconds];
+        }
+
+        protected function plugin(): FilamentOtpLoginPlugin
+        {
+            return FilamentOtpLoginPlugin::make()->rateLimit(7, 90);
         }
     };
 
