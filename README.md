@@ -3,7 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/afsakar/filament-otp-login.svg?style=flat-square)](https://packagist.org/packages/afsakar/filament-otp-login)
 [![Total Downloads](https://img.shields.io/packagist/dt/afsakar/filament-otp-login.svg?style=flat-square)](https://packagist.org/packages/afsakar/filament-otp-login)
 
-![Screenshot](https://banners.beyondco.de/Filament%20OTP%20Login.png?theme=light&packageManager=composer+require&packageName=afsakar%2Ffilament-otp-login&pattern=architect&style=style_1&description=Simple+OTP+Login+for+FilamentPHP&md=1&showWatermark=0&fontSize=100px&images=login)
+![Screenshot](https://raw.githubusercontent.com/afsakar/filament-otp-login/v2/assets/afsakar-otp-login.png)
 
 
 This package is an OTP Login for FilamentPHP. It is a simple package that allows you to login to your FilamentPHP application using OTP.
