@@ -20,6 +20,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
@@ -90,6 +91,15 @@ class Login extends BaseLogin
         }
     }
 
+    protected function resendRateLimiter(): void
+    {
+        $this->rateLimit(
+            Config::integer('filament-otp-login.resend_limit.attempts'),
+            Config::integer('filament-otp-login.resend_limit.decay_seconds'),
+            method: 'resendCode',
+        );
+    }
+
     public function authenticate(): ?LoginResponse
     {
         $this->rateLimiter();
@@ -128,9 +138,9 @@ class Login extends BaseLogin
 
     public function verifyCode(): void
     {
-        $code = OtpCode::whereCode($this->data['otp'])->whereEmail($this->data['email'])->first();
+        $code = OtpCode::whereEmail($this->data['email'])->first();
 
-        if (! $code) {
+        if ((! $code) || (! Hash::check($this->data['otp'], $code->code))) {
             throw ValidationException::withMessages([
                 'data.otp' => __('filament-otp-login::translations.validation.invalid_code'),
             ]);
@@ -147,20 +157,16 @@ class Login extends BaseLogin
 
     public function generateCode(): void
     {
-        do {
-            $length = Config::integer('filament-otp-login.otp_code.length');
+        $length = Config::integer('filament-otp-login.otp_code.length');
 
-            $code = str_pad(random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
-        } while (OtpCode::whereCode($code)->whereEmail($this->data['email'])->exists());
-
-        $this->otpCode = $code;
+        $this->otpCode = str_pad(random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
 
         $data = $this->form->getState();
 
         OtpCode::updateOrCreate([
             'email' => $data['email'],
         ], [
-            'code' => $this->otpCode,
+            'code' => Hash::make($this->otpCode),
             'expires_at' => now()->addSeconds(Config::integer('filament-otp-login.otp_code.expires')),
         ]);
 
@@ -181,6 +187,7 @@ class Login extends BaseLogin
     public function resendCode(): void
     {
         $this->rateLimiter();
+        $this->resendRateLimiter();
 
         $this->generateCode();
 

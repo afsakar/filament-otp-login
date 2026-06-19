@@ -36,6 +36,30 @@ Optionally, you can publish the views using
 php artisan vendor:publish --tag="filament-otp-login-views"
 ```
 
+## Upgrade Guide
+
+This release targets Filament `^4.0 || ^5.0` and PHP `^8.2`. Filament v2/v3 projects must upgrade Filament before upgrading this package.
+
+After upgrading, refresh your published config or manually add the new keys:
+
+```php
+'rate_limit' => [
+    'attempts' => (int) env('OTP_LOGIN_RATE_LIMIT_ATTEMPTS', 5),
+    'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
+],
+
+'resend_limit' => [
+    'attempts' => (int) env('OTP_LOGIN_RESEND_LIMIT_ATTEMPTS', 3),
+    'decay_seconds' => (int) env('OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS', 300),
+],
+
+'passwordless' => (bool) env('OTP_LOGIN_PASSWORDLESS', false),
+```
+
+If you published the login views, publish them again or update them for Filament v4/v5 components and translation namespaces. The package now uses Filament's native `OneTimeCodeInput`, so remove any custom references to `Afsakar\FilamentOtpLogin\Filament\Forms\OtpInput`.
+
+OTP codes are now stored as hashes. No migration is needed, but any active OTP code created before the upgrade will no longer verify; users can request a new code.
+
 This is the contents of the published config file:
 
 ```php
@@ -43,9 +67,21 @@ return [
     'table_name' => 'otp_codes', // Table name to store OTP codes
 
     'otp_code' => [
-        'length' => env('OTP_LOGIN_CODE_LENGTH', 6), // Length of the OTP code
-        'expires' => env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120), // Expiration time of the OTP code in seconds
+        'length' => (int) env('OTP_LOGIN_CODE_LENGTH', 6), // Length of the OTP code
+        'expires' => (int) env('OTP_LOGIN_CODE_EXPIRES_SECONDS', 120), // Expiration time of the OTP code in seconds
     ],
+
+    'rate_limit' => [
+        'attempts' => (int) env('OTP_LOGIN_RATE_LIMIT_ATTEMPTS', 5),
+        'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
+    ],
+
+    'resend_limit' => [
+        'attempts' => (int) env('OTP_LOGIN_RESEND_LIMIT_ATTEMPTS', 3),
+        'decay_seconds' => (int) env('OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS', 300),
+    ],
+
+    'passwordless' => (bool) env('OTP_LOGIN_PASSWORDLESS', false),
 
     'notification_class' => \Afsakar\FilamentOtpLogin\Notifications\SendOtpCode::class,
 ];
@@ -87,6 +123,12 @@ class User extends Authenticatable implements CanLoginDirectly
 ```
 
 _*Note:* For medium and large scale applications, you only need to run "php artisan model:prune" command as cron to prevent the otp_code table from bloating and performance issues._
+
+OTP codes are hashed before they are stored in the database.
+
+To enable passwordless login, set `OTP_LOGIN_PASSWORDLESS=true`. When enabled, users log in with email and OTP only.
+
+Use `OTP_LOGIN_RATE_LIMIT_ATTEMPTS` / `OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS` to tune login attempts, and `OTP_LOGIN_RESEND_LIMIT_ATTEMPTS` / `OTP_LOGIN_RESEND_LIMIT_DECAY_SECONDS` to tune resend attempts.
 
 ## Custom Login Page
 
@@ -228,7 +270,6 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 - [Azad Furkan ŞAKAR](https://github.com/afsakar)
 - [All Contributors](../../contributors)
-- [OTP Input inspiration](https://github.com/rajeshdewle/otp-pin-using-alpine-js-and-tailwindcss)
 
 ## License
 
