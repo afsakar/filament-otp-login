@@ -2,7 +2,6 @@
 
 namespace Afsakar\FilamentOtpLogin\Filament\Pages;
 
-use Afsakar\FilamentOtpLogin\Filament\Forms\OtpInput;
 use Afsakar\FilamentOtpLogin\Models\Contracts\CanLoginDirectly;
 use Afsakar\FilamentOtpLogin\Models\OtpCode;
 use Afsakar\FilamentOtpLogin\Notifications\SendOtpCode;
@@ -13,10 +12,12 @@ use Filament\Actions\ActionGroup;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\OneTimeCodeInput;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\HtmlString;
@@ -30,7 +31,7 @@ class Login extends BaseLogin
 
     public ?array $data = [];
 
-    public int $step = 1;
+    protected int $step = 1;
 
     private string $otpCode = '';
 
@@ -41,6 +42,16 @@ class Login extends BaseLogin
     public function getView(): string
     {
         return 'filament-otp-login::pages.login';
+    }
+
+    public function getStep(): int
+    {
+        return $this->step;
+    }
+
+    protected function isPasswordless(): bool
+    {
+        return Config::boolean('filament-otp-login.passwordless');
     }
 
     public function mount(): void
@@ -94,20 +105,23 @@ class Login extends BaseLogin
     {
         $data = $this->form->getState();
 
+        if ($this->isPasswordless()) {
+            $user = $this->getUserFromFormData($data);
+
+            Filament::auth()->login($user, $data['remember'] ?? false);
+
+            session()->regenerate();
+
+            return;
+        }
+
         if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
             $this->throwFailureValidationException();
         }
 
         $user = Filament::auth()->user();
 
-        if (
-            ($user instanceof FilamentUser) &&
-            (! $user->canAccessPanel(Filament::getCurrentPanel()))
-        ) {
-            Filament::auth()->logout();
-
-            $this->throwFailureValidationException();
-        }
+        $this->ensureUserCanAccessPanel($user);
 
         session()->regenerate();
     }
@@ -190,12 +204,18 @@ class Login extends BaseLogin
 
     public function form(Schema $schema): Schema
     {
+        $components = [
+            $this->getEmailFormComponent(),
+        ];
+
+        if (! $this->isPasswordless()) {
+            $components[] = $this->getPasswordFormComponent();
+        }
+
+        $components[] = $this->getRememberFormComponent();
+
         return $schema
-            ->components([
-                $this->getEmailFormComponent(),
-                $this->getPasswordFormComponent(),
-                $this->getRememberFormComponent(),
-            ]);
+            ->components($components);
     }
 
     public function otpForm(Schema $schema): Schema
@@ -209,8 +229,9 @@ class Login extends BaseLogin
 
     protected function getOtpCodeFormComponent(): Component
     {
-        return OtpInput::make('otp')
+        return OneTimeCodeInput::make('otp')
             ->label(__('filament-otp-login::translations.otp_code'))
+            ->length(Config::integer('filament-otp-login.otp_code.length'))
             ->hint(new HtmlString('<button type="button" wire:click="goBack()" class="focus:outline-none font-bold focus:underline hover:text-primary-400 text-primary-600 text-sm">' . __('filament-otp-login::translations.view.go_back') . '</button>'))
             ->required();
     }
@@ -260,10 +281,44 @@ class Login extends BaseLogin
      */
     protected function getCredentialsFromFormData(array $data): array
     {
+        if ($this->isPasswordless()) {
+            return [
+                'email' => $data['email'],
+            ];
+        }
+
         return [
             'email' => $data['email'],
             'password' => $data['password'],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function getUserFromFormData(array $data): Authenticatable
+    {
+        $user = Filament::auth()->getProvider()->retrieveByCredentials($this->getCredentialsFromFormData($data)); // @phpstan-ignore-line
+
+        if (! $user) {
+            $this->throwFailureValidationException();
+        }
+
+        $this->ensureUserCanAccessPanel($user);
+
+        return $user;
+    }
+
+    protected function ensureUserCanAccessPanel(?Authenticatable $user): void
+    {
+        if (
+            ($user instanceof FilamentUser) &&
+            (! $user->canAccessPanel(Filament::getCurrentPanel()))
+        ) {
+            Filament::auth()->logout();
+
+            $this->throwFailureValidationException();
+        }
     }
 
     protected function checkCanLoginDirectly($data)
@@ -290,6 +345,18 @@ class Login extends BaseLogin
 
     protected function checkCredentials($data): void
     {
+        if ($this->isPasswordless()) {
+            $this->getUserFromFormData($data);
+
+            $this->generateCode();
+
+            $this->sendOtpToUser($this->otpCode);
+
+            $this->step = 2;
+
+            return;
+        }
+
         if (! Filament::auth()->validate($this->getCredentialsFromFormData($data))) {
             $this->throwFailureValidationException();
         }

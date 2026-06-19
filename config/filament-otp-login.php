@@ -15,5 +15,7 @@ return [
         'decay_seconds' => (int) env('OTP_LOGIN_RATE_LIMIT_DECAY_SECONDS', 60),
     ],
 
+    'passwordless' => (bool) env('OTP_LOGIN_PASSWORDLESS', false),
+
     'notification_class' => SendOtpCode::class,
 ];

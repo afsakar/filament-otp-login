@@ -9,10 +9,10 @@
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE, scopes: $this->getRenderHookScopes()) }}
 
-    @switch($this->step)
+    @switch($this->getStep())
 
         @case(1)
-            <x-filament-panels::form wire:submit="sendOtp">
+            <form wire:submit="sendOtp" class="space-y-6">
                 {{ $this->form }}
 
                 <x-filament::button
@@ -26,13 +26,13 @@
                         {{ __('filament-panels::auth/pages/login.form.actions.authenticate.label') }}
                     </span>
                 </x-filament::button>
-            </x-filament-panels::form>
+            </form>
             @break
         @default
 
-            <x-filament-panels::form wire:submit="authenticate">
+            <form wire:submit="authenticate" class="space-y-6">
                 {{ $this->otpForm }}
-                <x-filament-panels::form.actions
+                <x-filament::actions
                     :actions="$this->getOtpFormActions()"
                     :full-width="true"
                 />
@@ -76,7 +76,7 @@
                     <input type="hidden" x-ref="timeLeft" name="timeLeft" />
                 </div>
 
-            </x-filament-panels::form>
+            </form>
     @endswitch
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, scopes: $this->getRenderHookScopes()) }}
